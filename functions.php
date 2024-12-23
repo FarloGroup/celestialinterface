@@ -13,13 +13,13 @@ add_action('after_setup_theme', 'your_theme_setup');
 // Include the update checker class
 require_once get_template_directory() . '/inc/theme-update.php';
 
-// Get the current theme version from style.css
-$current_theme_version = wp_get_theme()->get('Version');
+// // Get the current theme version from style.css
+// $current_theme_version = wp_get_theme()->get('Version');
 
-// Initialize the Custom Theme Updater
-new Custom_Theme_Upgrader(
-    'celestialinterface', // Replace with your theme's slug
-    'FarloGroup/celestialinterface', // Replace with your GitHub repo in 'owner/repo' format
-    $current_theme_version
-);
+// // Initialize the Custom Theme Updater
+// new Custom_Theme_Upgrader(
+//     'celestialinterface', // Replace with your theme's slug
+//     'FarloGroup/celestialinterface', // Replace with your GitHub repo in 'owner/repo' format
+//     $current_theme_version
+// );
 ?>
