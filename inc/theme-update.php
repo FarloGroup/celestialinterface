@@ -1,5 +1,5 @@
 <?php
-class Theme_Update_Checker {
+class Custom_Theme_Upgrader {
     private $theme_slug;
     private $remote_repo;
     private $current_version;
