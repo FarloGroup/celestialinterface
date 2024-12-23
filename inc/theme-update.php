@@ -17,6 +17,9 @@ class Theme_Update_Checker {
         add_filter('themes_api', array($this, 'theme_info'), 10, 3);
     }
 
+    /**
+     * Check for theme update
+     */
     public function check_for_update($transient) {
         if (empty($transient->checked)) {
             return $transient;
@@ -78,7 +81,7 @@ class Theme_Update_Checker {
                     'theme'       => $this->theme_slug,
                     'new_version' => $release_version,
                     'url'         => $release->html_url,
-                    'package'     => $this->download_url,
+                    'package'     => $this->download_url, // Update package URL
                 );
                 error_log('Theme Update Checker: Update added to transient.');
             } else {
@@ -91,6 +94,9 @@ class Theme_Update_Checker {
         return $transient;
     }
 
+    /**
+     * Provide theme information for the update
+     */
     public function theme_info($false, $action, $args) {
         if ($action !== 'theme_information' || $args->slug !== $this->theme_slug) {
             return false;
@@ -111,7 +117,9 @@ class Theme_Update_Checker {
             'timeout' => 10,
         );
 
+
         $response = wp_remote_get($this->api_url, $args_api);
+
 
         if (is_wp_error($response) || wp_remote_retrieve_response_code($response) != 200) {
             error_log('Theme Update Checker: Failed to retrieve release data for theme info.');
@@ -159,9 +167,96 @@ class Theme_Update_Checker {
     }
 }
 
-// Initialize the Theme Update Checker
+/**
+ * Custom Upgrader Class to Handle Authenticated Downloads
+ */
+class Custom_Theme_Upgrader extends Theme_Update_Checker {
+    /**
+     * Override the theme information to handle authenticated downloads.
+     */
+    public function theme_info($false, $action, $args) {
+        $theme_info = parent::theme_info($false, $action, $args);
+
+        if (!$theme_info) {
+            return false;
+        }
+
+        // Use the PAT to download the ZIP file
+        $download_response = wp_remote_get($theme_info->download_link, array(
+            'headers' => array(
+                'User-Agent'    => 'WordPress Theme Updater',
+                'Authorization' => 'token ' . GITHUB_PAT,
+                'Accept'        => 'application/vnd.github.v3+json',
+            ),
+            'timeout' => 60,
+            'sslverify' => true,
+        ));
+
+        if (is_wp_error($download_response) || wp_remote_retrieve_response_code($download_response) != 200) {
+            error_log('Custom Theme Updater: Failed to download the theme ZIP.');
+            return false;
+        }
+
+        $zip_body = wp_remote_retrieve_body($download_response);
+        $upload_dir = wp_upload_dir();
+        $temp_file = trailingslashit($upload_dir['basedir']) . "{$this->theme_slug}-update.zip";
+
+        // Save the ZIP file locally using WP_Filesystem
+        if (!function_exists('WP_Filesystem')) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+        }
+
+        WP_Filesystem();
+        global $wp_filesystem;
+
+        if (!$wp_filesystem->put_contents($temp_file, $zip_body, FS_CHMOD_FILE)) {
+            error_log('Custom Theme Updater: Failed to save the theme ZIP locally.');
+            return false;
+        }
+
+        // Set the download_link to the local file
+        $theme_info->download_link = trailingslashit($upload_dir['url']) . "{$this->theme_slug}-update.zip";
+
+        // Initiate the theme upgrade
+        $this->upgrade_theme($theme_info);
+
+        return $theme_info;
+    }
+
+    /**
+     * Upgrade the theme using the downloaded ZIP file.
+     *
+     * @param object $theme_info The theme information object.
+     */
+    private function upgrade_theme($theme_info) {
+        require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+        require_once ABSPATH . 'wp-admin/includes/theme.php';
+
+        // Initialize the theme upgrader
+        $upgrader = new Theme_Upgrader(new WP_Ajax_Upgrader_Skin());
+
+        // Perform the upgrade
+        $result = $upgrader->upgrade($this->theme_slug);
+
+        if (is_wp_error($result) || !$result) {
+            error_log('Custom Theme Updater: Theme upgrade failed.');
+        } else {
+            error_log('Custom Theme Updater: Theme upgraded successfully.');
+        }
+
+        // Clean up the temporary ZIP file
+        $upload_dir = wp_upload_dir();
+        $temp_file = trailingslashit($upload_dir['basedir']) . "{$this->theme_slug}-update.zip";
+        if ($wp_filesystem->exists($temp_file)) {
+            $wp_filesystem->delete($temp_file, true); // Force delete
+            error_log('Custom Theme Updater: Temporary ZIP file deleted.');
+        }
+    }
+}
+
+// Initialize the Custom Theme Updater
 $theme_slug = 'celestialinterface'; // Replace with your theme slug
-$remote_repo = 'farlogroup/celestialinterface'; // Replace with your GitHub repo in 'owner/repo' format
+$remote_repo = 'FarloGroup/celestialinterface'; // Replace with your GitHub repo in 'owner/repo' format
 $current_version = wp_get_theme($theme_slug)->get('Version');
-new Theme_Update_Checker($theme_slug, $remote_repo, $current_version);
+new Custom_Theme_Upgrader($theme_slug, $remote_repo, $current_version);
 ?>
