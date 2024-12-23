@@ -5,8 +5,8 @@ on:
     types: [published]
 
 permissions:
-  contents: write
-  releases: write
+  contents: write          # Allows reading and writing repository contents
+  releases: write          # Allows managing releases
 
 jobs:
   build:
@@ -25,7 +25,7 @@ jobs:
         id: create_zip
         run: |
           THEME_NAME="celestialinterface"
-          VERSION="${GITHUB_REF#refs/tags/}"
+          VERSION="${GITHUB_REF_NAME}"
           ZIP_NAME="${THEME_NAME}-${VERSION}.zip"
 
           # Remove any existing ZIP to avoid conflicts
@@ -43,4 +43,5 @@ jobs:
       - name: Upload Release Asset
         uses: ncipollo/release-action@v1
         with:
-          artifacts: ${{ github.workspace }}/celestialinterface-${{ github.ref#refs/tags/ }}.zip
+          artifacts: ${{ github.workspace }}/celestialinterface-${{ github.ref_name }}.zip
+          token: ${{ secrets.GITHUB_TOKEN }}
