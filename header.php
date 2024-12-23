@@ -11,5 +11,6 @@
         <?php the_custom_logo(); ?>
         <nav>
             <?php wp_nav_menu(['theme_location' => 'primary']); ?>
+            POOP
         </nav>
     </header>
