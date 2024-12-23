@@ -43,5 +43,4 @@ jobs:
       - name: Upload Release Asset
         uses: ncipollo/release-action@v1
         with:
-          artifacts: ${{ steps.create_zip.outputs.zip_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: ${{ github.workspace }}/celestialinterface-${{ github.ref#refs/tags/ }}.zip
