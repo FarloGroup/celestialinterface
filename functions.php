@@ -21,7 +21,7 @@ $current_theme_version = wp_get_theme()->get('Version');
 // Initialize the update checker
 new Theme_Update_Checker(
     'celestialinterface', // Replace with your theme's slug
-    'kierankarn/celestialinterface', // GitHub username and repository name
+    'farlogroup/celestialinterface', // GitHub username and repository name
     $current_theme_version
 );
 

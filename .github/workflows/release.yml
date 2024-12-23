@@ -24,7 +24,7 @@ jobs:
         id: create_zip
         run: |
           THEME_NAME="celestialinterface"
-          VERSION="${GITHUB_REF_NAME}"  # Correct variable interpolation
+          VERSION="${GITHUB_REF_NAME}"
           ZIP_NAME="${THEME_NAME}-${VERSION}.zip"
 
           # Remove any existing ZIP to avoid conflicts
