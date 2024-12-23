@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: write          # Allows reading and writing repository contents
-  releases: write          # Allows managing releases
 
 jobs:
   build:
@@ -25,7 +24,7 @@ jobs:
         id: create_zip
         run: |
           THEME_NAME="celestialinterface"
-          VERSION="${GITHUB_REF_NAME}"
+          VERSION="${GITHUB_REF_NAME}"  # Correct variable interpolation
           ZIP_NAME="${THEME_NAME}-${VERSION}.zip"
 
           # Remove any existing ZIP to avoid conflicts
@@ -40,8 +39,15 @@ jobs:
             exit 1
           fi
 
+          # Set the ZIP_NAME as an output
+          echo "zip_name=${ZIP_NAME}" >> $GITHUB_OUTPUT
+
       - name: Upload Release Asset
-        uses: ncipollo/release-action@v1
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          artifacts: ${{ github.workspace }}/celestialinterface-${{ github.ref_name }}.zip
-          token: ${{ secrets.GITHUB_TOKEN }}
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./${{ steps.create_zip.outputs.zip_name }}
+          asset_name: ${{ steps.create_zip.outputs.zip_name }}
+          asset_content_type: application/zip
