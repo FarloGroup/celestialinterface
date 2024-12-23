@@ -1,9 +1,5 @@
 <?php
-function your_theme_enqueue_scripts() {
-    wp_enqueue_style('your-theme-style', get_stylesheet_uri());
-    // Enqueue other styles and scripts here
-}
-add_action('wp_enqueue_scripts', 'your_theme_enqueue_scripts');
+
 
 // Add theme support for various features
 function your_theme_setup() {
@@ -28,5 +24,6 @@ new Theme_Update_Checker(
     'kierankarn/celestialinterface', // GitHub username and repository name
     $current_theme_version
 );
+
 
 ?>

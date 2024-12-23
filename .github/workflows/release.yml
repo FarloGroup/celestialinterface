@@ -1,0 +1,41 @@
+name: Create Release ZIP
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4' # Specify the PHP version you prefer
+
+      - name: Create ZIP file
+        run: |
+          # Define variables
+          THEME_NAME="celestialinterface"
+          VERSION="${GITHUB_REF#refs/tags/}"
+          ZIP_NAME="${THEME_NAME}-${VERSION}.zip"
+
+          # Remove any existing ZIP to avoid conflicts
+          rm -f ${ZIP_NAME}
+
+          # Create the ZIP without nesting
+          zip -r ${ZIP_NAME} . -x "*.git*" "*.github*" "README.md" "LICENSE" "node_modules/*" "*.DS_Store" "*.zip"
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./${ZIP_NAME}
+          asset_name: ${ZIP_NAME}
+          asset_content_type: application/zip
