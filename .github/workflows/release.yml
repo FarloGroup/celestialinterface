@@ -1,4 +1,4 @@
-name: Create Release ZIP
+name: Create and Upload Release ZIP
 
 on:
   release:
@@ -9,17 +9,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.4' # Specify the PHP version you prefer
+          php-version: '7.4' # Adjust the PHP version as needed
 
-      - name: Create ZIP file
+      - name: Create ZIP File
+        id: create_zip
         run: |
-          # Define variables
           THEME_NAME="celestialinterface"
           VERSION="${GITHUB_REF#refs/tags/}"
           ZIP_NAME="${THEME_NAME}-${VERSION}.zip"
@@ -30,12 +30,21 @@ jobs:
           # Create the ZIP without nesting
           zip -r ${ZIP_NAME} . -x "*.git*" "*.github*" "README.md" "LICENSE" "node_modules/*" "*.DS_Store" "*.zip"
 
+          # Ensure the ZIP was created
+          if [ ! -f "${ZIP_NAME}" ]; then
+            echo "ZIP creation failed."
+            exit 1
+          fi
+
+          # Set the ZIP_NAME as an output
+          echo "zip_name=${ZIP_NAME}" >> $GITHUB_OUTPUT
+
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./${ZIP_NAME}
-          asset_name: ${ZIP_NAME}
+          asset_path: ./${{ steps.create_zip.outputs.zip_name }}
+          asset_name: ${{ steps.create_zip.outputs.zip_name }}
           asset_content_type: application/zip
