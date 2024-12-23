@@ -5,8 +5,8 @@ on:
     types: [published]
 
 permissions:
-  contents: write          # Allows reading and writing repository contents
-  releases: write          # Allows managing releases
+  contents: write
+  releases: write
 
 jobs:
   build:
@@ -29,10 +29,10 @@ jobs:
           ZIP_NAME="${THEME_NAME}-${VERSION}.zip"
 
           # Remove any existing ZIP to avoid conflicts
-          rm -f ${ZIP_NAME}
+          rm -f "${ZIP_NAME}"
 
           # Create the ZIP without nesting
-          zip -r ${ZIP_NAME} . -x "*.git*" "*.github*" "README.md" "LICENSE" "node_modules/*" "*.DS_Store" "*.zip"
+          zip -r "${ZIP_NAME}" . -x "*.git*" "*.github*" "README.md" "LICENSE" "node_modules/*" "*.DS_Store" "*.zip"
 
           # Ensure the ZIP was created
           if [ ! -f "${ZIP_NAME}" ]; then
@@ -40,15 +40,8 @@ jobs:
             exit 1
           fi
 
-          # Set the ZIP_NAME as an output
-          echo "zip_name=${ZIP_NAME}" >> $GITHUB_OUTPUT
-
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./${{ steps.create_zip.outputs.zip_name }}
-          asset_name: ${{ steps.create_zip.outputs.zip_name }}
-          asset_content_type: application/zip
+          artifacts: ${{ steps.create_zip.outputs.zip_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
